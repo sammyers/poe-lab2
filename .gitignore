@@ -1,0 +1,4 @@
+.DS_STORE
+3dscan.csv
+*.hex
+.ipynb_checkpoints

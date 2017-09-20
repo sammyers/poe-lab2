@@ -2,6 +2,7 @@
  */
 
 #include <Servo.h>
+#include <math.h>
 
 int SENSOR_PIN = A0;
 int BUTTON_PIN = 8;
@@ -16,6 +17,8 @@ bool isScanning = false;
 // state variables to store servo position
 int zRotation = 0;
 int xRotation = 0;
+
+String line = "";
 
 void setup() {
   zServo.attach(9);  // attaches the servo on pin 9 to the servo object
@@ -38,17 +41,22 @@ bool checkIfButtonPressed() {
 
 // Returns the corresponding distance, in feet, for a given analog input value
 long mapDistance(int analogInput) {
-  return map(analogInput, 198, 42, 2, 10);
+  return map(analogInput, 490, 230, 20, 50);
 }
 
-// Read the current distance from the sensor
-long readDistance() {
-  return mapDistance(analogRead(SENSOR_PIN));
+long readAverageDistance() {
+  long totalReading = 0;
+  for (int i = 0; i < 5; i++) {
+    totalReading += analogRead(SENSOR_PIN);
+  }
+  return mapDistance(totalReading / 5);
 }
 
 // write a triplet of values to the serial port
 void recordDistance(int xPos, int zPos, long distance) {
-  
+  line = line + xPos + ", " + zPos + ", " + distance;
+  Serial.println(line);
+  line = "";
 }
 
 void scanSurface() {
@@ -60,16 +68,19 @@ void scanSurface() {
     for (zRotation = 0; zRotation <= 180; zRotation ++) {
       zServo.write(zRotation);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15ms for the servo to reach the position
-      recordDistance(xRotation, zRotation, readDistance());
+      recordDistance(xRotation, zRotation, readAverageDistance());
     }
   }
 }
 
 void loop() {
-  if (checkIfButtonPressed()) {
-    isScanning = !isScanning;
-  }
-  if (isScanning) {
-    scanSurface();
-  }
+  long distance = readAverageDistance();
+  recordDistance(1, 2, distance);
+  delay(1000);
+  // if (checkIfButtonPressed()) {
+  //   isScanning = !isScanning;
+  // }
+  // if (isScanning) {
+  //   scanSurface();
+  // }
 }
