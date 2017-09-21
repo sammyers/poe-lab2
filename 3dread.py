@@ -6,6 +6,7 @@ BAUD_RATE = 9600
 
 def read_values(arduino):
     with open('3dscan.csv', 'w+') as csvfile:
+        csvfile.write('x_rotation, z_rotation, distance\r\n')
         while True:
             line = arduino.readline()
             if line:

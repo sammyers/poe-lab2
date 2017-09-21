@@ -18,6 +18,9 @@ bool isScanning = false;
 int zRotation = 0;
 int xRotation = 0;
 
+int xStart;
+int zStart;
+
 String line = "";
 
 void setup() {
@@ -27,6 +30,12 @@ void setup() {
   pinMode(BUTTON_PIN, INPUT);
 
   Serial.begin(9600);
+
+  // xStart = xServo.read() - 50;
+  // zStart = zServo.read() - ;
+
+  xServo.write(0);
+  zServo.write(0);
 }
 
 bool checkIfButtonPressed() {
@@ -60,27 +69,38 @@ void recordDistance(int xPos, int zPos, long distance) {
 }
 
 void scanSurface() {
-  for (xRotation = 0; xRotation <= 180; xRotation ++) { // goes from 0 degrees to 180 degrees
+  int zSweepStart;
+  int zSweepEnd;
+  int increment;
+
+  for (xRotation = xStart; xRotation <= xStart + 90; xRotation ++) { // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
     xServo.write(xRotation);              // tell servo to go to position in variable 'pos'
     delay(15);                       // waits 15ms for the servo to reach the position
 
-    for (zRotation = 0; zRotation <= 180; zRotation ++) {
+    if (xRotation % 2 == 0) {
+      zSweepStart = zStart;
+      zSweepEnd = zStart + 90;
+      increment = 1;
+    } else {
+      zSweepStart = zStart + 90;
+      zSweepEnd = zStart;
+      increment = -1;
+    }
+    for (zRotation = zSweepStart; zRotation <= zSweepEnd; zRotation += increment) {
       zServo.write(zRotation);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15ms for the servo to reach the position
-      recordDistance(xRotation, zRotation, readAverageDistance());
+      recordDistance(xRotation - xStart, zRotation - zStart, readAverageDistance());
     }
   }
 }
 
 void loop() {
-  long distance = readAverageDistance();
-  recordDistance(1, 2, distance);
-  delay(1000);
-  // if (checkIfButtonPressed()) {
-  //   isScanning = !isScanning;
-  // }
-  // if (isScanning) {
-  //   scanSurface();
-  // }
+  // long distance = readAverageDistance();
+  // recordDistance(1, 2, distance);
+  // delay(1000);
+  if (!isScanning) {
+    scanSurface();
+    isScanning = true;
+  }
 }
